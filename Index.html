@@ -1,0 +1,1419 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeX Studio Ultimate - Modern Web IDE</title>
+
+    <!-- Tailwind CSS v3 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- JSZip for Export Zip -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <!-- CodeMirror 5 Core & Themes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-palenight.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/monokai.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/nord.min.css">
+    
+    <!-- CodeMirror Addon Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-main: #07080e;
+            --panel-bg: rgba(13, 16, 28, 0.82);
+            --accent-purple: #a855f7;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-main);
+            color: #e2e8f0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .font-mono {
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(15, 18, 30, 0.78);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-header {
+            background: rgba(10, 12, 22, 0.92);
+            backdrop-filter: blur(14px);
+            border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+        }
+
+        /* CodeMirror Theme Custom Overrides */
+        .CodeMirror {
+            height: 100% !important;
+            font-family: 'Fira Code', monospace !important;
+            font-size: 13px;
+            line-height: 1.6;
+            background-color: transparent !important;
+            color: #e2e8f0 !important;
+        }
+        .CodeMirror-gutters {
+            background-color: rgba(9, 11, 20, 0.8) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+        }
+        .CodeMirror-activeline-background {
+            background: rgba(168, 85, 247, 0.12) !important;
+        }
+        .CodeMirror-selected {
+            background: rgba(168, 85, 247, 0.3) !important;
+        }
+        .CodeMirror-hints {
+            background: #111422 !important;
+            border: 1px solid rgba(168, 85, 247, 0.4) !important;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px -5px rgba(0,0,0,0.8);
+            padding: 6px;
+            z-index: 100 !important;
+        }
+        .CodeMirror-hint {
+            color: #cbd5e1 !important;
+            border-radius: 4px;
+            padding: 4px 8px !important;
+            font-family: 'Fira Code', monospace !important;
+            font-size: 12px;
+        }
+        li.CodeMirror-hint-active {
+            background: linear-gradient(90deg, #a855f7, #6366f1) !important;
+            color: #ffffff !important;
+        }
+
+        /* Device Simulator Framing */
+        .device-wrapper {
+            transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 35px rgba(168, 85, 247, 0.15);
+        }
+
+        .device-bezel {
+            border: 10px solid #1a1e30;
+            border-radius: 32px;
+            background: #000;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .device-bezel.no-frame {
+            border: none;
+            border-radius: 12px;
+        }
+
+        .device-notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 110px;
+            height: 20px;
+            background-color: #1a1e30;
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .device-notch-camera {
+            width: 8px;
+            height: 8px;
+            background: #090a0f;
+            border-radius: 50%;
+        }
+
+        .device-notch-speaker {
+            width: 32px;
+            height: 3px;
+            background: #090a0f;
+            border-radius: 2px;
+        }
+
+        /* Landscape Mode Notch */
+        .device-landscape .device-notch {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 110px;
+            border-bottom-left-radius: 0;
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            flex-direction: column;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(10, 13, 20, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(168, 85, 247, 0.3);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(168, 85, 247, 0.6);
+        }
+
+        /* Resizer Drag Splitter */
+        .splitter {
+            width: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            cursor: col-resize;
+            transition: background 0.2s;
+            position: relative;
+            z-index: 10;
+        }
+        .splitter:hover, .splitter.dragging {
+            background: #a855f7;
+            box-shadow: 0 0 12px rgba(168, 85, 247, 0.8);
+        }
+
+        .modal-backdrop {
+            background: rgba(4, 6, 14, 0.85);
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col bg-[#07080e] text-slate-200 overflow-hidden">
+
+    <!-- Header IDE Bar -->
+    <header class="glass-header h-14 px-4 flex items-center justify-between z-30 shrink-0">
+        <!-- Logo & Branding -->
+        <div class="flex items-center space-x-3">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-500 to-cyan-400 flex items-center justify-center font-bold text-lg text-white shadow-lg shadow-purple-900/40">
+                <i class="fa-solid fa-code font-mono"></i>
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <h1 class="font-extrabold text-base tracking-wide bg-gradient-to-r from-purple-400 via-cyan-300 to-emerald-400 bg-clip-text text-transparent">
+                        CodeX Studio Ultimate
+                    </h1>
+                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-purple-900/50 text-purple-300 border border-purple-500/30">v4.0 Pro</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Middle Actions & Tools Toolbar -->
+        <div class="hidden xl:flex items-center space-x-2">
+            <!-- Templates Modal -->
+            <button onclick="openModal('templatesModal')" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs font-medium border border-slate-700/80 flex items-center space-x-2 transition hover:text-purple-300">
+                <i class="fa-solid fa-shapes text-purple-400"></i>
+                <span>Templat</span>
+            </button>
+
+            <!-- CDN Library Manager -->
+            <button onclick="openModal('cdnModal')" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs font-medium border border-slate-700/80 flex items-center space-x-2 transition hover:text-cyan-300">
+                <i class="fa-solid fa-cubes text-cyan-400"></i>
+                <span>Injeksi CDN</span>
+            </button>
+
+            <!-- Color Picker Studio -->
+            <div class="flex items-center space-x-1.5 bg-slate-800/80 px-2.5 py-1 rounded-lg border border-slate-700/80" title="Color Picker Studio">
+                <i class="fa-solid fa-palette text-xs text-rose-400"></i>
+                <input type="color" id="globalColorPicker" value="#a855f7" onchange="copyColorHex(this.value)" class="w-5 h-5 bg-transparent cursor-pointer rounded overflow-hidden border-0">
+                <span id="colorHexLabel" class="text-[11px] font-mono text-slate-300 cursor-pointer" onclick="copyColorHex(document.getElementById('globalColorPicker').value)">#a855f7</span>
+            </div>
+
+            <!-- Auto-Save Toggle -->
+            <button id="autoSaveToggleBtn" onclick="toggleAutoSave()" class="px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-300 border border-emerald-800/80 text-xs font-medium flex items-center space-x-1.5 transition">
+                <i class="fa-solid fa-floppy-disk text-emerald-400"></i>
+                <span id="autoSaveLabel">Auto-Save: ON</span>
+            </button>
+
+            <!-- Shortcuts Info Modal Trigger -->
+            <button onclick="openModal('shortcutsModal')" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700/80 transition" title="Pintasan Keyboard">
+                <i class="fa-solid fa-keyboard text-yellow-400"></i>
+            </button>
+        </div>
+
+        <!-- Right Side Actions: Run, Export, Import, Sound -->
+        <div class="flex items-center space-x-2">
+            <!-- Sound Toggle -->
+            <button id="soundToggleBtn" onclick="toggleSound()" class="p-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-400 hover:text-slate-200 text-xs border border-slate-700/80 transition" title="Efek Suara Swat/Click">
+                <i class="fa-solid fa-volume-high text-emerald-400"></i>
+            </button>
+
+            <!-- Import Project Files -->
+            <label class="p-2 px-3 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700/80 transition flex items-center space-x-1.5 cursor-pointer" title="Impor Proyek / Berkas">
+                <i class="fa-solid fa-file-import text-cyan-400"></i>
+                <span class="hidden sm:inline">Impor</span>
+                <input type="file" id="importFileInput" onchange="handleFileImport(event)" accept=".html,.css,.js,.json" class="hidden">
+            </label>
+
+            <!-- Export Dropdown -->
+            <div class="relative group">
+                <button class="p-2 px-3 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700/80 transition flex items-center space-x-1.5">
+                    <i class="fa-solid fa-download text-purple-400"></i>
+                    <span class="hidden sm:inline">Ekspor</span>
+                    <i class="fa-solid fa-chevron-down text-[9px] text-slate-400"></i>
+                </button>
+                <div class="absolute right-0 top-full mt-1 w-48 rounded-xl glass-panel shadow-2xl py-2 hidden group-hover:block z-50 border border-purple-500/20">
+                    <button onclick="exportSingleHTML()" class="w-full text-left px-3 py-2 text-xs hover:bg-purple-600/20 hover:text-purple-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-code text-cyan-400"></i>
+                        <span>Bundel Single HTML</span>
+                    </button>
+                    <button onclick="exportZIPPackage()" class="w-full text-left px-3 py-2 text-xs hover:bg-purple-600/20 hover:text-purple-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-zipper text-yellow-400"></i>
+                        <span>Paket Proyek ZIP</span>
+                    </button>
+                    <button onclick="exportProjectJSON()" class="w-full text-left px-3 py-2 text-xs hover:bg-purple-600/20 hover:text-purple-300 flex items-center space-x-2">
+                        <i class="fa-solid fa-file-lines text-emerald-400"></i>
+                        <span>Berkas Proyek JSON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Run / Compile Button -->
+            <button onclick="runCode()" class="px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 via-indigo-600 to-cyan-500 hover:from-purple-500 hover:to-cyan-400 text-white text-xs font-bold shadow-lg shadow-purple-900/40 flex items-center space-x-2 transition active:scale-95">
+                <i class="fa-solid fa-play"></i>
+                <span>Jalankan</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN WORKSPACE SPLIT (Landscape Split Screen) -->
+    <main class="flex-1 flex flex-col md:flex-row overflow-hidden relative" id="workspaceContainer">
+
+        <!-- LEFT PANEL: Multi-Device Preview Viewport & Controls -->
+        <section id="previewPanel" class="w-full md:w-[500px] bg-[#090b12] flex flex-col items-center justify-between p-3 relative border-b md:border-b-0 md:border-r border-slate-800/80 shrink-0">
+
+            <!-- Device Toolbar Selector Controls -->
+            <div class="w-full flex flex-wrap items-center justify-between gap-2 mb-2 px-2 text-xs text-slate-400 shrink-0">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-display text-purple-400"></i>
+                    <!-- Multi-Device Viewport Selector -->
+                    <select id="deviceSelector" onchange="changeDeviceViewport(this.value)" class="bg-slate-900/90 border border-slate-700 text-slate-300 rounded-lg px-2.5 py-1 text-xs focus:outline-none focus:border-purple-500 font-medium">
+                        <option value="phone">📱 Mobile / Phone (320 x 580)</option>
+                        <option value="phoneLandscape">📱 Phone Landscape (580 x 320)</option>
+                        <option value="tablet">▯ Tablet Portrait (768 x 1024)</option>
+                        <option value="tabletLandscape">💻 Laptop / Tablet Landscape (1024 x 680)</option>
+                        <option value="pc">🖥 PC / Desktop Screen (1280 x 720 / 100%)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center space-x-1.5">
+                    <!-- Orientation Rotate Toggle -->
+                    <button onclick="toggleDeviceOrientation()" class="p-1.5 px-2.5 rounded-lg bg-slate-800/80 hover:bg-purple-900/50 hover:text-purple-300 text-slate-300 border border-slate-700/80 transition flex items-center space-x-1.5" title="Putar Orientasi">
+                        <i class="fa-solid fa-rotate"></i>
+                        <span id="orientationLabel" class="text-[10px] font-mono">Potret</span>
+                    </button>
+                    <!-- Reload Preview -->
+                    <button onclick="runCode()" class="p-1.5 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Muat Ulang Preview">
+                        <i class="fa-solid fa-arrows-rotate text-xs"></i>
+                    </button>
+                    <!-- Popout Preview in New Tab -->
+                    <button onclick="openPopoutPreview()" class="p-1.5 px-2 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700/80 transition" title="Buka di Tab Baru">
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Device Container Frame -->
+            <div id="deviceContainer" class="device-container flex-1 flex items-center justify-center w-full h-full max-h-[760px] my-auto overflow-hidden">
+                <div id="deviceWrapper" class="device-wrapper w-[320px] h-[580px] transition-all duration-300">
+                    <div id="deviceBezel" class="device-bezel w-full h-full relative transition-all duration-300">
+                        <!-- Phone Notch Header -->
+                        <div id="deviceNotch" class="device-notch">
+                            <div class="device-notch-speaker"></div>
+                            <div class="device-notch-camera"></div>
+                        </div>
+
+                        <!-- Sandbox Preview Frame -->
+                        <iframe id="previewIframe" title="CodeX Preview" class="w-full h-full bg-white border-0" sandbox="allow-scripts allow-modals allow-same-origin allow-popups"></iframe>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Live Stats -->
+            <div class="w-full flex items-center justify-between pt-2 px-2 text-[11px] font-mono text-slate-500 border-t border-slate-800/60 shrink-0">
+                <div id="editorStats" class="flex items-center space-x-3">
+                    <span>Baris: <strong id="statLines" class="text-purple-400">0</strong></span>
+                    <span>Karakter: <strong id="statChars" class="text-cyan-400">0</strong></span>
+                    <span>Kata: <strong id="statWords" class="text-emerald-400">0</strong></span>
+                </div>
+                <div id="liveStatusBadge" class="flex items-center space-x-1 text-emerald-400">
+                    <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span>Live Auto-Sync</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resizable Drag Splitter Bar -->
+        <div id="dragSplitter" class="splitter hidden md:block" title="Geser untuk mengubah ukuran panel"></div>
+
+        <!-- RIGHT PANEL: Multi-Tab Editor & Live Console REPL -->
+        <section class="flex-1 flex flex-col h-full bg-[#080a10] overflow-hidden min-w-0">
+
+            <!-- UPPER EDITOR SECTION -->
+            <div class="flex-1 flex flex-col min-h-0 relative border-b border-slate-800/80">
+
+                <!-- File Tabs & Editor Toolbar -->
+                <div class="h-10 glass-panel border-b border-slate-800/80 flex items-center justify-between px-2 shrink-0">
+                    <!-- File Tabs -->
+                    <div class="flex items-center space-x-1">
+                        <button onclick="switchTab('html')" id="tab-html" class="tab-btn active px-3.5 py-1.5 rounded-t-lg text-xs font-mono font-medium flex items-center space-x-2 bg-purple-900/40 text-purple-300 border-t-2 border-purple-500">
+                            <i class="fa-brands fa-html5 text-orange-500"></i>
+                            <span>index.html</span>
+                        </button>
+                        <button onclick="switchTab('css')" id="tab-css" class="tab-btn px-3.5 py-1.5 rounded-t-lg text-xs font-mono font-medium flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+                            <i class="fa-brands fa-css3-alt text-cyan-400"></i>
+                            <span>style.css</span>
+                        </button>
+                        <button onclick="switchTab('js')" id="tab-js" class="tab-btn px-3.5 py-1.5 rounded-t-lg text-xs font-mono font-medium flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+                            <i class="fa-brands fa-js text-yellow-400"></i>
+                            <span>script.js</span>
+                        </button>
+                    </div>
+
+                    <!-- Editor Toolbar Actions -->
+                    <div class="flex items-center space-x-1 text-slate-400">
+                        <!-- Code Beautifier / Format -->
+                        <button onclick="formatActiveCode()" class="p-1.5 px-2 rounded-md hover:bg-slate-800 hover:text-slate-200 text-xs transition" title="✨ Format Kode (Beautifier)">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
+                        </button>
+                        <!-- Find & Replace -->
+                        <button onclick="triggerFindReplace()" class="p-1.5 px-2 rounded-md hover:bg-slate-800 hover:text-slate-200 text-xs transition" title="Cari & Ganti (Ctrl+F)">
+                            <i class="fa-solid fa-magnifying-glass text-cyan-400"></i>
+                        </button>
+                        <!-- Undo -->
+                        <button onclick="undoEditor()" class="p-1.5 px-2 rounded-md hover:bg-slate-800 hover:text-slate-200 text-xs transition" title="Urungkan (Ctrl+Z)">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <!-- Redo -->
+                        <button onclick="redoEditor()" class="p-1.5 px-2 rounded-md hover:bg-slate-800 hover:text-slate-200 text-xs transition" title="Ulangi (Ctrl+Y)">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                        <!-- Font Size Zoom -->
+                        <div class="flex items-center space-x-1 bg-slate-900 border border-slate-700/80 rounded-md px-1.5 py-0.5 text-[11px] font-mono">
+                            <button onclick="changeFontSize(-1)" class="hover:text-purple-400 font-bold px-1">-</button>
+                            <span id="fontSizeDisplay">13px</span>
+                            <button onclick="changeFontSize(1)" class="hover:text-purple-400 font-bold px-1">+</button>
+                        </div>
+                        <!-- Theme Selector -->
+                        <select id="editorThemeSelector" onchange="changeEditorTheme(this.value)" class="bg-slate-900 border border-slate-700/80 text-slate-300 rounded-md px-2 py-0.5 text-xs focus:outline-none">
+                            <option value="material-palenight">Palenight</option>
+                            <option value="dracula">Dracula</option>
+                            <option value="monokai">Monokai</option>
+                            <option value="nord">Nord</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- CodeMirror Container Mounts -->
+                <div class="flex-1 relative overflow-hidden bg-slate-950/50">
+                    <div id="cm-html-container" class="absolute inset-0"></div>
+                    <div id="cm-css-container" class="absolute inset-0 hidden"></div>
+                    <div id="cm-js-container" class="absolute inset-0 hidden"></div>
+                </div>
+            </div>
+
+            <!-- LOWER TERMINAL & REPL CONSOLE SECTION -->
+            <div id="terminalContainer" class="h-44 sm:h-52 bg-[#05070c] flex flex-col shrink-0">
+
+                <!-- Terminal Header Bar -->
+                <div class="h-8 glass-panel px-3 flex items-center justify-between border-b border-slate-800/80 shrink-0">
+                    <div class="flex items-center space-x-2">
+                        <i class="fa-solid fa-terminal text-xs text-emerald-400"></i>
+                        <span class="text-xs font-mono font-bold text-slate-300">TERMINAL &amp; KONSOL REPL</span>
+                        <span id="logCountBadge" class="text-[10px] px-1.5 py-0.2 rounded-full bg-purple-900/50 text-purple-300 font-mono border border-purple-500/30">0</span>
+                    </div>
+
+                    <!-- Log Filters & Actions -->
+                    <div class="flex items-center space-x-2">
+                        <div class="flex items-center space-x-1 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 text-[10px] font-mono">
+                            <button onclick="filterLogs('all')" class="log-filter-btn px-1.5 rounded bg-purple-600 text-white">All</button>
+                            <button onclick="filterLogs('log')" class="log-filter-btn px-1.5 text-slate-400 hover:text-slate-200">Logs</button>
+                            <button onclick="filterLogs('warn')" class="log-filter-btn px-1.5 text-yellow-400 hover:text-yellow-200">Warns</button>
+                            <button onclick="filterLogs('error')" class="log-filter-btn px-1.5 text-rose-400 hover:text-rose-200">Errors</button>
+                        </div>
+                        <button onclick="copyTerminalLogs()" class="text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800 px-2 py-0.5 rounded transition flex items-center space-x-1" title="Salin Log Terminal">
+                            <i class="fa-solid fa-copy text-[10px]"></i>
+                            <span>Salin</span>
+                        </button>
+                        <button onclick="clearTerminal()" class="text-[11px] text-slate-400 hover:text-slate-200 hover:bg-slate-800 px-2 py-0.5 rounded transition flex items-center space-x-1" title="Bersihkan Terminal">
+                            <i class="fa-solid fa-trash-can text-[10px]"></i>
+                            <span>Bersihkan</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Terminal Log History -->
+                <div id="terminalLogs" class="flex-1 p-2.5 font-mono text-xs overflow-y-auto space-y-1.5 selection:bg-purple-900 selection:text-purple-100">
+                    <div class="text-slate-500 italic text-[11px]">[Sistem] CodeX Terminal REPL aktif. Evaluasi console.log, warning, dan error runtime real-time.</div>
+                </div>
+
+                <!-- Interactive JavaScript REPL Input -->
+                <div class="h-9 bg-[#080b14] border-t border-slate-800/80 px-3 flex items-center space-x-2 shrink-0">
+                    <span class="text-emerald-400 font-mono font-bold text-xs">&gt;</span>
+                    <input type="text" id="terminalInput" onkeydown="handleTerminalCommand(event)" placeholder="Ketik perintah JS (contoh: document.body.style.background='red')..." class="flex-1 bg-transparent border-0 text-xs font-mono text-purple-200 focus:outline-none placeholder-slate-600">
+                    <span class="text-[10px] text-slate-600 font-mono hidden sm:inline">Enter ↵</span>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODALS SECTION -->
+
+    <!-- 1. TEMPLATES MODAL -->
+    <div id="templatesModal" class="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-2xl rounded-2xl border border-purple-500/30 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-purple-300 flex items-center space-x-2">
+                    <i class="fa-solid fa-shapes text-purple-400"></i>
+                    <span>Pilih Templat Proyek Modern</span>
+                </h3>
+                <button onclick="closeModal('templatesModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+                <!-- 3D Particle Sphere -->
+                <div onclick="loadTemplate('canvas3d')" class="p-3.5 rounded-xl bg-slate-900/80 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 cursor-pointer transition space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-cyan-300">3D Particle Sphere</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">Three.js</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Sphere partikel 3D interaktif yang berputar menggunakan Three.js.</p>
+                </div>
+                <!-- Glassmorphism Portfolio -->
+                <div onclick="loadTemplate('glassmorphism')" class="p-3.5 rounded-xl bg-slate-900/80 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 cursor-pointer transition space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-purple-300">Cyber Glass Card</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800">CSS UI</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Kartu profil bermotif Glassmorphism dengan animasi hover menyala.</p>
+                </div>
+                <!-- Neumorphism Calculator -->
+                <div onclick="loadTemplate('calculator')" class="p-3.5 rounded-xl bg-slate-900/80 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 cursor-pointer transition space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-emerald-300">Neumorphic Calculator</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">App</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Kalkulator digital responsif dengan desain Neumorphism halus.</p>
+                </div>
+                <!-- REST API Fetcher -->
+                <div onclick="loadTemplate('apifetch')" class="p-3.5 rounded-xl bg-slate-900/80 hover:bg-purple-950/40 border border-slate-800 hover:border-purple-500/50 cursor-pointer transition space-y-1">
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-sm text-yellow-300">Crypto Quote Fetcher</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded bg-yellow-950 text-yellow-400 border border-yellow-800">REST API</span>
+                    </div>
+                    <p class="text-xs text-slate-400">Pengambilan data asynchronous dari REST API publik real-time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. CDN LIBRARY MANAGER MODAL -->
+    <div id="cdnModal" class="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-xl rounded-2xl border border-cyan-500/30 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-cyan-300 flex items-center space-x-2">
+                    <i class="fa-solid fa-cubes text-cyan-400"></i>
+                    <span>Pustaka CDN Injector (1-Click)</span>
+                </h3>
+                <button onclick="closeModal('cdnModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-400">Pilih pustaka eksternal untuk dimasukkan langsung ke tag <code>&lt;head&gt;</code> HTML Anda secara otomatis.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto pr-1 font-mono text-xs">
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="tailwind" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>Tailwind CSS v3</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="fontawesome" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>Font Awesome 6</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="bootstrap" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>Bootstrap v5 CSS</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="jquery" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>jQuery v3.7</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="three" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>Three.js (3D)</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="gsap" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>GSAP Animation</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="animatecss" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>Animate.css</span>
+                </label>
+                <label class="flex items-center space-x-2 p-2.5 rounded-lg bg-slate-900/80 border border-slate-800 cursor-pointer hover:bg-slate-800">
+                    <input type="checkbox" value="sweetalert" class="cdn-checkbox rounded text-purple-600 focus:ring-0">
+                    <span>SweetAlert2</span>
+                </label>
+            </div>
+
+            <div class="flex justify-end pt-2">
+                <button onclick="injectCDNs()" class="px-4 py-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition">
+                    Injeksi Pustaka Terpilih
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. KEYBOARD SHORTCUTS MODAL -->
+    <div id="shortcutsModal" class="fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4 hidden">
+        <div class="glass-panel w-full max-w-md rounded-2xl border border-yellow-500/30 p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h3 class="text-lg font-bold text-yellow-300 flex items-center space-x-2">
+                    <i class="fa-solid fa-keyboard text-yellow-400"></i>
+                    <span>Pintasan Keyboard</span>
+                </h3>
+                <button onclick="closeModal('shortcutsModal')" class="text-slate-400 hover:text-white text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <div class="space-y-2 font-mono text-xs">
+                <div class="flex justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Jalankan Kode (Run)</span>
+                    <span class="text-purple-400 font-bold">Ctrl + R / Cmd + R</span>
+                </div>
+                <div class="flex justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Simpan Proyek</span>
+                    <span class="text-purple-400 font-bold">Ctrl + S / Cmd + S</span>
+                </div>
+                <div class="flex justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Autocomplete Kode</span>
+                    <span class="text-purple-400 font-bold">Ctrl + Space</span>
+                </div>
+                <div class="flex justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Cari &amp; Ganti Teks</span>
+                    <span class="text-purple-400 font-bold">Ctrl + F / Cmd + F</span>
+                </div>
+                <div class="flex justify-between p-2 rounded bg-slate-900/80 border border-slate-800">
+                    <span class="text-slate-300">Urungkan / Ulangi</span>
+                    <span class="text-purple-400 font-bold">Ctrl + Z / Ctrl + Y</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CodeMirror Core Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    
+    <!-- CodeMirror Modes -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <!-- CodeMirror Addons -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/xml-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/css-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/hint/javascript-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchtags.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/foldgutter.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/fold/xml-fold.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/selection/active-line.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/search.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/search/searchcursor.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/dialog/dialog.min.js"></script>
+
+    <script>
+        /* =====================================================
+           GLOBAL STATE & INITIALIZATION
+        ===================================================== */
+        let editors = {};
+        let activeTab = 'html';
+        let soundEnabled = true;
+        let autoSaveEnabled = true;
+        let isLandscapeDevice = false;
+        let totalLogs = 0;
+        let currentFontSize = 13;
+        let autoSyncTimer = null;
+
+        // CDN Link Registry
+        const cdnRegistry = {
+            tailwind: '<script src="https://cdn.tailwindcss.com"><\/script>',
+            fontawesome: '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">',
+            bootstrap: '<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">',
+            jquery: '<script src="https://code.jquery.com/jquery-3.7.1.min.js"><\/script>',
+            three: '<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"><\/script>',
+            gsap: '<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"><\/script>',
+            animatecss: '<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">',
+            sweetalert: '<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"><\/script>'
+        };
+
+        // Default Code Preset
+        const defaultCode = {
+            html: `<!-- CodeX Studio Ultimate Starter -->
+<div class="card">
+    <div class="icon">🚀</div>
+    <h2>CodeX Ultimate IDE</h2>
+    <p class="subtitle">Desain Neon Dark Glassmorphism Multi-Device</p>
+
+    <div class="display" id="counter">0</div>
+
+    <div class="btn-group">
+        <button onclick="changeCount(-1)">-</button>
+        <button onclick="resetCount()">Reset</button>
+        <button onclick="changeCount(1)">+</button>
+    </div>
+</div>`,
+            css: `/* Glassmorphism Styling */
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at center, #1e1035 0%, #07090e 100%);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    color: #ffffff;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(168, 85, 247, 0.3);
+    border-radius: 24px;
+    padding: 32px 24px;
+    width: 280px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.icon { font-size: 40px; margin-bottom: 8px; }
+
+h2 {
+    margin: 0;
+    font-size: 22px;
+    background: linear-gradient(135deg, #c084fc, #38bdf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle { font-size: 11px; color: #94a3b8; margin: 6px 0 20px 0; }
+
+.display {
+    font-size: 52px;
+    font-weight: bold;
+    color: #38bdf8;
+    text-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+    margin: 10px 0;
+}
+
+.btn-group { display: flex; gap: 8px; }
+
+button {
+    flex: 1;
+    padding: 10px 0;
+    border: none;
+    border-radius: 12px;
+    background: rgba(168, 85, 247, 0.25);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(168, 85, 247, 0.4);
+    transition: all 0.2s;
+}
+
+button:hover {
+    background: #a855f7;
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.6);
+}`,
+            js: `// Logika JavaScript Counter
+let count = 0;
+
+function changeCount(val) {
+    count += val;
+    document.getElementById('counter').innerText = count;
+    console.log("Counter diperbarui:", count);
+}
+
+function resetCount() {
+    count = 0;
+    document.getElementById('counter').innerText = count;
+    console.info("Counter direset ke 0");
+}`
+        };
+
+        // Templates Database
+        const templates = {
+            canvas3d: {
+                html: `<canvas id="threeCanvas"></canvas>`,
+                css: `body { margin: 0; overflow: hidden; background: #05070e; }
+canvas { display: block; width: 100vw; height: 100vh; }`,
+                js: `if (typeof THREE === 'undefined') {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+    script.onload = initThree;
+    document.head.appendChild(script);
+} else {
+    initThree();
+}
+
+function initThree() {
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('threeCanvas'), antialias: true });
+    
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const geometry = new THREE.SphereGeometry(2, 32, 32);
+    const material = new THREE.MeshBasicMaterial({ color: 0xa855f7, wireframe: true });
+    const sphere = new THREE.Mesh(geometry, material);
+    scene.add(sphere);
+
+    camera.position.z = 5;
+
+    function animate() {
+        requestAnimationFrame(animate);
+        sphere.rotation.x += 0.01;
+        sphere.rotation.y += 0.01;
+        renderer.render(scene, camera);
+    }
+    animate();
+    console.log("3D Particle Sphere Three.js Berjalan!");
+}`
+            },
+            glassmorphism: defaultCode,
+            calculator: {
+                html: `<div class="calc">
+    <div id="res" class="screen">0</div>
+    <div class="grid">
+        <button onclick="clearCalc()">C</button>
+        <button onclick="press('/')">/</button>
+        <button onclick="press('*')">*</button>
+        <button onclick="press('-')">-</button>
+        <button onclick="press('7')">7</button>
+        <button onclick="press('8')">8</button>
+        <button onclick="press('9')">9</button>
+        <button onclick="press('+')">+</button>
+        <button onclick="press('4')">4</button>
+        <button onclick="press('5')">5</button>
+        <button onclick="press('6')">6</button>
+        <button onclick="evalCalc()" class="equal">=</button>
+        <button onclick="press('1')">1</button>
+        <button onclick="press('2')">2</button>
+        <button onclick="press('3')">3</button>
+        <button onclick="press('0')">0</button>
+    </div>
+</div>`,
+                css: `body { margin: 0; background: #0b0f19; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: sans-serif; }
+.calc { background: #131927; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 260px; }
+.screen { background: #090c14; padding: 15px; font-size: 28px; text-align: right; border-radius: 10px; margin-bottom: 15px; font-family: monospace; color: #10b981; overflow: hidden; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+button { padding: 15px; border-radius: 10px; border: none; background: #1e2638; color: white; font-size: 16px; cursor: pointer; }
+button:hover { background: #3b82f6; }
+.equal { grid-row: span 2; background: #10b981; }`,
+                js: `let expr = '';
+function press(val) { expr += val; document.getElementById('res').innerText = expr; }
+function clearCalc() { expr = ''; document.getElementById('res').innerText = '0'; }
+function evalCalc() {
+    try {
+        expr = eval(expr).toString();
+        document.getElementById('res').innerText = expr;
+    } catch(e) {
+        document.getElementById('res').innerText = 'Error';
+        console.error("Kalkulasi Error:", e.message);
+    }
+}`
+            },
+            apifetch: {
+                html: `<div style="padding:20px; text-align:center;">
+    <h2>Live Crypto Quote</h2>
+    <div id="cryptoDisplay" style="font-size:24px; color:#10b981; margin:20px 0;">Memuat...</div>
+    <button onclick="fetchCrypto()" style="padding:10px 20px; border-radius:8px; border:none; background:#06b6d4; color:white; cursor:pointer;">Refresh Price</button>
+</div>`,
+                css: `body { margin: 0; background: #080a10; color: white; font-family: sans-serif; }`,
+                js: `async function fetchCrypto() {
+    document.getElementById('cryptoDisplay').innerText = 'Mengambil data...';
+    try {
+        const res = await fetch('https://api.coindesk.com/v1/bpi/currentprice.json');
+        const data = await res.json();
+        const rate = data.bpi.USD.rate;
+        document.getElementById('cryptoDisplay').innerText = 'BTC/USD: $' + rate;
+        console.log("Harga Bitcoin diperbarui:", rate);
+    } catch(err) {
+        console.error("Gagal mengambil API:", err);
+    }
+}
+fetchCrypto();`
+            }
+        };
+
+        // Sound Synthesizer
+        function playSoundEffect(type) {
+            if (!soundEnabled) return;
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(200, ctx.currentTime + 0.04);
+                    gain.gain.setValueAtTime(0.08, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.04);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.04);
+                } else if (type === 'run') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(350, ctx.currentTime);
+                    osc.frequency.linearRampToValueAtTime(850, ctx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.08);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('soundToggleBtn');
+            btn.innerHTML = soundEnabled 
+                ? '<i class="fa-solid fa-volume-high text-emerald-400"></i>' 
+                : '<i class="fa-solid fa-volume-xmark text-slate-500"></i>';
+        }
+
+        function toggleAutoSave() {
+            autoSaveEnabled = !autoSaveEnabled;
+            const label = document.getElementById('autoSaveLabel');
+            const btn = document.getElementById('autoSaveToggleBtn');
+            if (autoSaveEnabled) {
+                label.innerText = 'Auto-Save: ON';
+                btn.className = "px-3 py-1.5 rounded-lg bg-emerald-950/40 text-emerald-300 border border-emerald-800/80 text-xs font-medium flex items-center space-x-1.5 transition";
+            } else {
+                label.innerText = 'Auto-Save: OFF';
+                btn.className = "px-3 py-1.5 rounded-lg bg-slate-900 text-slate-500 border border-slate-800 text-xs font-medium flex items-center space-x-1.5 transition";
+            }
+        }
+
+        // On Load Initialization
+        window.onload = function() {
+            const savedCode = {
+                html: localStorage.getItem('codex_html') || defaultCode.html,
+                css: localStorage.getItem('codex_css') || defaultCode.css,
+                js: localStorage.getItem('codex_js') || defaultCode.js
+            };
+
+            const cmOptions = {
+                theme: 'material-palenight',
+                lineNumbers: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                autoCloseTags: true,
+                matchTags: { bothTags: true },
+                styleActiveLine: true,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                extraKeys: {
+                    "Ctrl-Space": "autocomplete",
+                    "Cmd-Space": "autocomplete",
+                    "Ctrl-S": function() { saveToLocalStorage(); },
+                    "Cmd-S": function() { saveToLocalStorage(); },
+                    "Ctrl-R": function() { runCode(); },
+                    "Cmd-R": function() { runCode(); }
+                }
+            };
+
+            // Instantiate Editors
+            editors.html = CodeMirror(document.getElementById('cm-html-container'), { ...cmOptions, value: savedCode.html, mode: 'htmlmixed' });
+            editors.css = CodeMirror(document.getElementById('cm-css-container'), { ...cmOptions, value: savedCode.css, mode: 'css' });
+            editors.js = CodeMirror(document.getElementById('cm-js-container'), { ...cmOptions, value: savedCode.js, mode: 'javascript' });
+
+            // Attach Autocomplete
+            Object.keys(editors).forEach(lang => {
+                editors[lang].on("keyup", function (cm, event) {
+                    if (!cm.state.completionActive && event.keyCode >= 65 && event.keyCode <= 90) {
+                        CodeMirror.commands.autocomplete(cm, null, { completeSingle: false });
+                    }
+                });
+
+                editors[lang].on("change", function() {
+                    if (autoSaveEnabled) {
+                        localStorage.setItem(`codex_${lang}`, editors[lang].getValue());
+                    }
+                    updateEditorStats();
+                    
+                    // Live Debounce Run
+                    clearTimeout(autoSyncTimer);
+                    autoSyncTimer = setTimeout(runCode, 1000);
+                });
+            });
+
+            // Resizer Splitter Drag
+            setupSplitterDrag();
+
+            // Initial Setup
+            updateEditorStats();
+            runCode();
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem('codex_html', editors.html.getValue());
+            localStorage.setItem('codex_css', editors.css.getValue());
+            localStorage.setItem('codex_js', editors.js.getValue());
+            appendTerminalLog('info', 'Proyek berhasil disimpan ke LocalStorage!');
+        }
+
+        // Switch Tabs
+        function switchTab(lang) {
+            playSoundEffect('click');
+            activeTab = lang;
+            ['html', 'css', 'js'].forEach(l => {
+                const tab = document.getElementById(`tab-${l}`);
+                const container = document.getElementById(`cm-${l}-container`);
+                if (l === lang) {
+                    tab.className = "tab-btn active px-3.5 py-1.5 rounded-t-lg text-xs font-mono font-medium flex items-center space-x-2 bg-purple-900/40 text-purple-300 border-t-2 border-purple-500";
+                    container.classList.remove('hidden');
+                    editors[l].refresh();
+                } else {
+                    tab.className = "tab-btn px-3.5 py-1.5 rounded-t-lg text-xs font-mono font-medium flex items-center space-x-2 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50";
+                    container.classList.add('hidden');
+                }
+            });
+            updateEditorStats();
+        }
+
+        // Run Code Execution
+        function runCode() {
+            playSoundEffect('run');
+            const iframe = document.getElementById('previewIframe');
+            
+            const html = editors.html.getValue();
+            const css = editors.css.getValue();
+            const js = editors.js.getValue();
+
+            const sourceDoc = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>${css}</style>
+                    <script>
+                        (function() {
+                            const send = (type, args) => {
+                                try {
+                                    window.parent.postMessage({
+                                        type: 'CONSOLE_LOG',
+                                        logType: type,
+                                        message: Array.from(args).map(a => typeof a === 'object' ? JSON.stringify(a) : String(a)).join(' ')
+                                    }, '*');
+                                } catch(e){}
+                            };
+
+                            ['log', 'warn', 'error', 'info'].forEach(m => {
+                                const orig = console[m];
+                                console[m] = function(...args) {
+                                    send(m, args);
+                                    orig.apply(console, args);
+                                };
+                            });
+
+                            window.onerror = function(msg, url, line, col, err) {
+                                window.parent.postMessage({
+                                    type: 'RUNTIME_ERROR',
+                                    message: msg,
+                                    line: line
+                                }, '*');
+                                return false;
+                            };
+
+                            window.addEventListener('unhandledrejection', function(e) {
+                                window.parent.postMessage({
+                                    type: 'RUNTIME_ERROR',
+                                    message: 'Unhandled Promise: ' + e.reason,
+                                    line: 'Async'
+                                }, '*');
+                            });
+                        })();
+                    <\/script>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+                </html>
+            `;
+
+            iframe.srcdoc = sourceDoc;
+        }
+
+        // Terminal Log Receiver
+        window.addEventListener('message', function(e) {
+            const data = e.data;
+            if (!data) return;
+            if (data.type === 'CONSOLE_LOG') {
+                appendTerminalLog(data.logType, data.message);
+            } else if (data.type === 'RUNTIME_ERROR') {
+                appendTerminalLog('error', `Error Runtime [Baris ${data.line}]: ${data.message}`);
+            }
+        });
+
+        function appendTerminalLog(type, message) {
+            const logsDiv = document.getElementById('terminalLogs');
+            const entry = document.createElement('div');
+            const time = new Date().toLocaleTimeString('id-ID', { hour12: false });
+            
+            let badgeClass = 'text-slate-400';
+            if (type === 'error') badgeClass = 'text-rose-400 font-bold bg-rose-950/40 px-1 py-0.5 rounded border border-rose-900/40';
+            else if (type === 'warn') badgeClass = 'text-yellow-300';
+            else if (type === 'info') badgeClass = 'text-cyan-300';
+
+            entry.className = `log-entry log-type-${type} flex items-start space-x-2 text-xs py-0.5`;
+            entry.innerHTML = `
+                <span class="text-[10px] text-slate-500 select-none pt-0.5">[${time}]</span>
+                <span class="${badgeClass} flex-1 break-all">${escapeHtml(message)}</span>
+            `;
+
+            logsDiv.appendChild(entry);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+            totalLogs++;
+            document.getElementById('logCountBadge').innerText = totalLogs;
+        }
+
+        function clearTerminal() {
+            playSoundEffect('click');
+            document.getElementById('terminalLogs').innerHTML = '<div class="text-slate-500 italic text-[11px]">[Sistem] Terminal dibersihkan.</div>';
+            totalLogs = 0;
+            document.getElementById('logCountBadge').innerText = '0';
+        }
+
+        function copyTerminalLogs() {
+            playSoundEffect('click');
+            const logs = Array.from(document.querySelectorAll('.log-entry')).map(e => e.innerText).join('\n');
+            navigator.clipboard.writeText(logs);
+            appendTerminalLog('info', 'Seluruh log terminal berhasil disalin.');
+        }
+
+        function filterLogs(type) {
+            playSoundEffect('click');
+            const entries = document.querySelectorAll('.log-entry');
+            entries.forEach(e => {
+                if (type === 'all' || e.classList.contains(`log-type-${type}`)) {
+                    e.style.display = 'flex';
+                } else {
+                    e.style.display = 'none';
+                }
+            });
+        }
+
+        function handleTerminalCommand(e) {
+            if (e.key === 'Enter') {
+                const input = e.target;
+                const cmd = input.value.trim();
+                if (!cmd) return;
+
+                appendTerminalLog('info', `> ${cmd}`);
+                input.value = '';
+
+                try {
+                    const win = document.getElementById('previewIframe').contentWindow;
+                    const res = win.eval(cmd);
+                    appendTerminalLog('log', `< ${res !== undefined ? JSON.stringify(res) : 'undefined'}`);
+                } catch (err) {
+                    appendTerminalLog('error', `< ${err.message}`);
+                }
+            }
+        }
+
+        // Multi-Device Viewport Sizing
+        function changeDeviceViewport(val) {
+            playSoundEffect('click');
+            const wrapper = document.getElementById('deviceWrapper');
+            const bezel = document.getElementById('deviceBezel');
+            const notch = document.getElementById('deviceNotch');
+
+            if (val === 'phone') {
+                wrapper.style.width = isLandscapeDevice ? '580px' : '320px';
+                wrapper.style.height = isLandscapeDevice ? '320px' : '580px';
+                bezel.className = "device-bezel w-full h-full relative transition-all duration-300";
+                notch.style.display = 'flex';
+            } else if (val === 'phoneLandscape') {
+                wrapper.style.width = '580px';
+                wrapper.style.height = '320px';
+                bezel.className = "device-bezel w-full h-full relative transition-all duration-300";
+                notch.style.display = 'flex';
+            } else if (val === 'tablet') {
+                wrapper.style.width = '520px';
+                wrapper.style.height = '680px';
+                bezel.className = "device-bezel w-full h-full relative transition-all duration-300";
+                notch.style.display = 'none';
+            } else if (val === 'tabletLandscape') {
+                wrapper.style.width = '680px';
+                wrapper.style.height = '480px';
+                bezel.className = "device-bezel w-full h-full relative transition-all duration-300";
+                notch.style.display = 'none';
+            } else if (val === 'pc') {
+                wrapper.style.width = '100%';
+                wrapper.style.height = '100%';
+                bezel.className = "device-bezel no-frame w-full h-full relative transition-all duration-300";
+                notch.style.display = 'none';
+            }
+        }
+
+        function toggleDeviceOrientation() {
+            playSoundEffect('click');
+            isLandscapeDevice = !isLandscapeDevice;
+            const bezel = document.getElementById('deviceBezel');
+            const label = document.getElementById('orientationLabel');
+
+            if (isLandscapeDevice) {
+                bezel.classList.add('device-landscape');
+                label.innerText = 'Lanskap';
+            } else {
+                bezel.classList.remove('device-landscape');
+                label.innerText = 'Potret';
+            }
+            changeDeviceViewport(document.getElementById('deviceSelector').value);
+        }
+
+        // Live Editor Statistics
+        function updateEditorStats() {
+            const content = editors[activeTab].getValue();
+            const lines = editors[activeTab].lineCount();
+            const chars = content.length;
+            const words = content.trim() ? content.trim().split(/\s+/).length : 0;
+
+            document.getElementById('statLines').innerText = lines;
+            document.getElementById('statChars').innerText = chars;
+            document.getElementById('statWords').innerText = words;
+        }
+
+        // Splitter Drag Handler
+        function setupSplitterDrag() {
+            const splitter = document.getElementById('dragSplitter');
+            const previewPanel = document.getElementById('previewPanel');
+            let isDragging = false;
+
+            splitter.addEventListener('mousedown', () => {
+                isDragging = true;
+                splitter.classList.add('dragging');
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                const newWidth = e.clientX;
+                if (newWidth > 280 && newWidth < window.innerWidth - 300) {
+                    previewPanel.style.width = `${newWidth}px`;
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                isDragging = false;
+                splitter.classList.remove('dragging');
+            });
+        }
+
+        // Modals Management
+        function openModal(id) {
+            playSoundEffect('click');
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            playSoundEffect('click');
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Load Preset Templates
+        function loadTemplate(name) {
+            if (templates[name]) {
+                editors.html.setValue(templates[name].html);
+                editors.css.setValue(templates[name].css);
+                editors.js.setValue(templates[name].js);
+                runCode();
+                closeModal('templatesModal');
+                appendTerminalLog('info', `Templat '${name}' dimuat!`);
+            }
+        }
+
+        // Inject CDN Libraries
+        function injectCDNs() {
+            playSoundEffect('click');
+            const checkboxes = document.querySelectorAll('.cdn-checkbox:checked');
+            let html = editors.html.getValue();
+
+            checkboxes.forEach(cb => {
+                const tag = cdnRegistry[cb.value];
+                if (tag && !html.includes(tag)) {
+                    html = `${tag}\n${html}`;
+                }
+            });
+
+            editors.html.setValue(html);
+            runCode();
+            closeModal('cdnModal');
+            appendTerminalLog('info', 'Pustaka CDN berhasil diinjeksi ke HTML.');
+        }
+
+        // Code Formatting & Tools
+        function formatActiveCode() {
+            playSoundEffect('click');
+            const editor = editors[activeTab];
+            const lines = editor.lineCount();
+            for (let i = 0; i < lines; i++) {
+                editor.indentLine(i, "smart");
+            }
+            appendTerminalLog('info', `Format kode ${activeTab.toUpperCase()} selesai.`);
+        }
+
+        function triggerFindReplace() {
+            editors[activeTab].execCommand("replace");
+        }
+
+        function undoEditor() { editors[activeTab].undo(); }
+        function redoEditor() { editors[activeTab].redo(); }
+
+        function changeFontSize(delta) {
+            currentFontSize = Math.max(10, Math.min(22, currentFontSize + delta));
+            document.getElementById('fontSizeDisplay').innerText = `${currentFontSize}px`;
+            document.querySelectorAll('.CodeMirror').forEach(cm => {
+                cm.style.fontSize = `${currentFontSize}px`;
+            });
+            Object.values(editors).forEach(e => e.refresh());
+        }
+
+        function changeEditorTheme(theme) {
+            Object.values(editors).forEach(e => e.setOption('theme', theme));
+        }
+
+        // Export Utilities
+        function exportSingleHTML() {
+            playSoundEffect('click');
+            const fullHTML = `<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeX Studio Ultimate Project</title>
+    <style>${editors.css.getValue()}</style>
+</head>
+<body>
+${editors.html.getValue()}
+    <script>${editors.js.getValue()}<\/script>
+</body>
+</html>`;
+
+            downloadBlob(fullHTML, 'codex_project.html', 'text/html');
+        }
+
+        function exportZIPPackage() {
+            playSoundEffect('click');
+            if (typeof JSZip === 'undefined') {
+                alert('JSZip belum siap!');
+                return;
+            }
+            const zip = new JSZip();
+            zip.file('index.html', editors.html.getValue());
+            zip.file('style.css', editors.css.getValue());
+            zip.file('script.js', editors.js.getValue());
+
+            zip.generateAsync({ type: 'blob' }).then(content => {
+                downloadBlob(content, 'codex_project.zip', 'application/zip');
+            });
+        }
+
+        function exportProjectJSON() {
+            playSoundEffect('click');
+            const proj = {
+                html: editors.html.getValue(),
+                css: editors.css.getValue(),
+                js: editors.js.getValue()
+            };
+            downloadBlob(JSON.stringify(proj, null, 2), 'codex_project.json', 'application/json');
+        }
+
+        function handleFileImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const text = evt.target.result;
+                if (file.name.endsWith('.json')) {
+                    try {
+                        const json = JSON.parse(text);
+                        if (json.html) editors.html.setValue(json.html);
+                        if (json.css) editors.css.setValue(json.css);
+                        if (json.js) editors.js.setValue(json.js);
+                    } catch(err) { alert('JSON tidak valid!'); }
+                } else if (file.name.endsWith('.css')) {
+                    editors.css.setValue(text); switchTab('css');
+                } else if (file.name.endsWith('.js')) {
+                    editors.js.setValue(text); switchTab('js');
+                } else {
+                    editors.html.setValue(text); switchTab('html');
+                }
+                runCode();
+            };
+            reader.readAsText(file);
+        }
+
+        function downloadBlob(content, filename, contentType) {
+            const blob = content instanceof Blob ? content : new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function copyColorHex(val) {
+            document.getElementById('colorHexLabel').innerText = val;
+            navigator.clipboard.writeText(val);
+            appendTerminalLog('info', `Warna ${val} disalin ke clipboard.`);
+        }
+
+        function openPopoutPreview() {
+            const win = window.open();
+            win.document.write(`<!DOCTYPE html><html><head><style>${editors.css.getValue()}</style></head><body>${editors.html.getValue()}<script>${editors.js.getValue()}<\/script></body></html>`);
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+    </script>
+</body>
+</html>
